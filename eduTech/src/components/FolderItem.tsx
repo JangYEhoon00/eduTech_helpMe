@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { ChevronDown, ChevronRight, Folder, Eye, EyeOff, Edit2 } from 'lucide-react';
+import { ChevronDown, ChevronRight, Folder, Eye, EyeOff, Edit2, Trash2 } from 'lucide-react';
 import { FolderStructure } from '../utils/types';
 
 interface FolderItemProps {
@@ -11,9 +11,14 @@ interface FolderItemProps {
   selectedNodeId?: string;
   toggleCategoryVisibility: (category: string) => void;
   hiddenCategories: string[];
+  removeNode: (nodeId: string) => void;
+  removeCategory: (category: string) => void;
 }
 
-export const FolderItem: React.FC<FolderItemProps> = ({ item, level, toggleFolder, onNodeClick, onRename, selectedNodeId, toggleCategoryVisibility, hiddenCategories }) => {
+export const FolderItem: React.FC<FolderItemProps> = ({ 
+  item, level, toggleFolder, onNodeClick, onRename, selectedNodeId, toggleCategoryVisibility, hiddenCategories,
+  removeNode, removeCategory
+}) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(item.name);
 
@@ -32,14 +37,27 @@ export const FolderItem: React.FC<FolderItemProps> = ({ item, level, toggleFolde
 
   if (item.type === 'file') {
     return (
-      <button 
-        onClick={() => onNodeClick(item.nodeId!)}
-        className={`w-full text-left py-1.5 rounded-md flex items-center gap-2 transition-all duration-300 hover:bg-slate-800/50 ${selectedNodeId === item.nodeId ? 'text-indigo-300 font-medium bg-indigo-900/20' : 'text-slate-400'}`}
-        style={{ paddingLeft: `${level * 16 + 12}px` }}
-      >
-        <div className={`w-1.5 h-1.5 rounded-full shrink-0 transition-all duration-500 ${selectedNodeId === item.nodeId ? 'bg-indigo-400 shadow-[0_0_8px_rgba(99,102,241,0.5)]' : 'bg-slate-600'}`} />
-        <span className="truncate text-sm">{item.name}</span>
-      </button>
+      <div className="group/file relative flex items-center">
+        <button 
+          onClick={() => onNodeClick(item.nodeId!)}
+          className={`w-full text-left py-1.5 rounded-md flex items-center gap-2 transition-all duration-300 hover:bg-slate-800/50 ${selectedNodeId === item.nodeId ? 'text-indigo-300 font-medium bg-indigo-900/20' : 'text-slate-400'}`}
+          style={{ paddingLeft: `${level * 16 + 12}px` }}
+        >
+          <div className={`w-1.5 h-1.5 rounded-full shrink-0 transition-all duration-500 ${selectedNodeId === item.nodeId ? 'bg-indigo-400 shadow-[0_0_8px_rgba(99,102,241,0.5)]' : 'bg-slate-600'}`} />
+          <span className="truncate text-sm flex-1">{item.name}</span>
+        </button>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            if (window.confirm('정말 삭제하시겠습니까?')) {
+              removeNode(item.nodeId!);
+            }
+          }}
+          className="absolute right-2 p-1 text-slate-600 hover:text-red-400 opacity-0 group-hover/file:opacity-100 transition-all duration-200"
+        >
+          <Trash2 className="w-3 h-3" />
+        </button>
+      </div>
     );
   }
 
@@ -69,13 +87,27 @@ export const FolderItem: React.FC<FolderItemProps> = ({ item, level, toggleFolde
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
             {/* Show Filter Toggle only for Category Folders (2nd level, id starts with sub_) */}
             {item.id.startsWith('sub_') && (
-                <button 
-                    onClick={(e) => { e.stopPropagation(); toggleCategoryVisibility(item.name); }}
-                    className={`p-1 transition-colors hover:text-white ${isHidden ? 'text-slate-600' : 'text-indigo-400'}`}
-                    title={isHidden ? "Show Category" : "Hide Category"}
-                >
-                    {isHidden ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
-                </button>
+                <>
+                  <button 
+                      onClick={(e) => { e.stopPropagation(); toggleCategoryVisibility(item.name); }}
+                      className={`p-1 transition-colors hover:text-white ${isHidden ? 'text-slate-600' : 'text-indigo-400'}`}
+                      title={isHidden ? "Show Category" : "Hide Category"}
+                  >
+                      {isHidden ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (window.confirm(`'${item.name}' 카테고리의 모든 노드를 삭제하시겠습니까?`)) {
+                        removeCategory(item.name);
+                      }
+                    }}
+                    className="p-1 hover:text-red-400 text-slate-600 transition-colors"
+                    title="Delete Category"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </button>
+                </>
             )}
             <button 
             onClick={(e) => { e.stopPropagation(); setIsEditing(!isEditing); }}
@@ -99,6 +131,8 @@ export const FolderItem: React.FC<FolderItemProps> = ({ item, level, toggleFolde
               selectedNodeId={selectedNodeId}
               toggleCategoryVisibility={toggleCategoryVisibility}
               hiddenCategories={hiddenCategories}
+              removeNode={removeNode}
+              removeCategory={removeCategory}
             />
           ))}
         </div>

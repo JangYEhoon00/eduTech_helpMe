@@ -31,7 +31,9 @@ export default function App() {
     toggleCategoryVisibility,
     updateNodeStatus,
     addNodesAndLinks,
-    isLoading: graphLoading
+    isLoading: graphLoading,
+    removeNode,
+    removeCategory
   } = useGraphData(user?.id);
 
   const { folderData, toggleFolder, renameFolder } = useFolderHierarchy(graphData.nodes);
@@ -243,6 +245,8 @@ export default function App() {
           hiddenCategories={hiddenCategories}
           graphData={graphData}
           startQuiz={() => startQuiz(selectedNode, setScreen)}
+          removeNode={removeNode}
+          removeCategory={removeCategory}
         />
       )}
 

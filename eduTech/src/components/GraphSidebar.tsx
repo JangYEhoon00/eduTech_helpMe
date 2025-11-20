@@ -15,6 +15,8 @@ interface GraphSidebarProps {
   hiddenCategories: string[];
   isCollapsed: boolean;
   setIsCollapsed: (collapsed: boolean) => void;
+  removeNode: (nodeId: string) => void;
+  removeCategory: (category: string) => void;
 }
 
 export const GraphSidebar = ({
@@ -28,7 +30,9 @@ export const GraphSidebar = ({
   toggleCategoryVisibility,
   hiddenCategories,
   isCollapsed,
-  setIsCollapsed
+  setIsCollapsed,
+  removeNode,
+  removeCategory
 }: GraphSidebarProps) => {
   return (
     <div className={`absolute left-0 top-0 h-full bg-slate-900/95 backdrop-blur-xl border-r border-slate-800 z-40 shadow-2xl flex flex-col transform transition-all duration-500 ease-in-out ${screen === 'graph' ? 'translate-x-0' : '-translate-x-full'} ${isCollapsed ? 'w-12' : 'w-80'}`}>
@@ -66,6 +70,8 @@ export const GraphSidebar = ({
               selectedNodeId={selectedNode?.id}
               toggleCategoryVisibility={toggleCategoryVisibility}
               hiddenCategories={hiddenCategories}
+              removeNode={removeNode}
+              removeCategory={removeCategory}
             />
           ))}
         </div>

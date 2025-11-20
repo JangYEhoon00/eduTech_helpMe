@@ -19,11 +19,14 @@ interface GraphScreenProps {
   hiddenCategories: string[];
   graphData: GraphData;
   startQuiz: () => void;
+  removeNode: (nodeId: string) => void;
+  removeCategory: (category: string) => void;
 }
 
 export const GraphScreen = ({ 
   screen, setScreen, folderData, toggleFolder, setSelectedNode, renameFolder, 
-  selectedNode, toggleCategoryVisibility, hiddenCategories, graphData, startQuiz 
+  selectedNode, toggleCategoryVisibility, hiddenCategories, graphData, startQuiz,
+  removeNode, removeCategory
 }: GraphScreenProps) => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
@@ -43,6 +46,8 @@ export const GraphScreen = ({
         hiddenCategories={hiddenCategories}
         isCollapsed={isSidebarCollapsed}
         setIsCollapsed={setIsSidebarCollapsed}
+        removeNode={removeNode}
+        removeCategory={removeCategory}
       />
 
       {/* 3D Graph Area */}

@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { GraphData, Node, Link } from '../utils/types';
-import { fetchGraphData, createNodes, createLinks, updateNode } from '../services/supabaseService';
+import { fetchGraphData, createNodes, createLinks, updateNode, deleteNode } from '../services/supabaseService';
 
 export const useGraphData = (userId?: string) => {
   const [graphData, setGraphData] = useState<GraphData>({ 
@@ -84,6 +84,41 @@ export const useGraphData = (userId?: string) => {
     }
   };
 
+  const removeNode = async (nodeId: string) => {
+    // Optimistic update
+    setGraphData(prev => ({
+      nodes: prev.nodes.filter(n => n.id !== nodeId),
+      links: prev.links.filter(l => l.source !== nodeId && l.target !== nodeId)
+    }));
+
+    if (userId) {
+      try {
+        await deleteNode(nodeId);
+      } catch (error) {
+        console.error('Failed to delete node:', error);
+      }
+    }
+  };
+
+  const removeCategory = async (category: string) => {
+    const nodesToDelete = graphData.nodes.filter(n => n.category === category);
+    const nodeIds = nodesToDelete.map(n => n.id);
+
+    // Optimistic update
+    setGraphData(prev => ({
+      nodes: prev.nodes.filter(n => n.category !== category),
+      links: prev.links.filter(l => !nodeIds.includes(l.source as string) && !nodeIds.includes(l.target as string))
+    }));
+
+    if (userId) {
+      try {
+        await Promise.all(nodeIds.map(id => deleteNode(id)));
+      } catch (error) {
+        console.error('Failed to delete category:', error);
+      }
+    }
+  };
+
   return {
     graphData,
     setGraphData,
@@ -94,6 +129,8 @@ export const useGraphData = (userId?: string) => {
     toggleCategoryVisibility,
     updateNodeStatus,
     addNodesAndLinks,
+    removeNode,
+    removeCategory,
     isLoading
   };
 };
