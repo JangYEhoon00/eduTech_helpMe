@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ScreenState, Node, Link } from './utils/types';
 import { HomeScreen } from './screens/HomeScreen';
+import { OnboardingFlow } from './components/OnboardingFlow';
 import { InputScreen } from './screens/InputScreen';
 import { GraphScreen } from './screens/GraphScreen';
 import { MetaCheckScreen } from './screens/MetaCheckScreen';
@@ -115,6 +116,42 @@ export default function App() {
   return (
     <>
       {screen === 'onboarding' && <HomeScreen setScreen={setScreen} />}
+      {screen === 'onboardingFlow' && (
+        <OnboardingFlow
+          onComplete={(data: any) => {
+            // Map onboarding data into initial graph nodes/links and navigate to graph
+            const baseCategory = data?.usageType || '일반';
+            const newNodes: Node[] = [];
+            if (data?.usageType === 'work') {
+              newNodes.push({ id: `onboard_${Date.now()}` , label: data.details?.jobField || '업무', status: 'new', val: 25, category: baseCategory, description: '온보딩 - 직무' });
+            } else if (data?.usageType === 'personal') {
+              const keywords: string[] = data.details?.keywords || [];
+              if (keywords.length > 0) {
+                keywords.forEach((k, i) => newNodes.push({ id: `onboard_${Date.now()}_${i}`, label: k, status: 'new', val: 20, category: baseCategory, description: '온보딩 - 관심사' }));
+              } else {
+                newNodes.push({ id: `onboard_${Date.now()}`, label: data.details?.interestText || '관심사', status: 'new', val: 25, category: baseCategory, description: '온보딩 - 관심사' });
+              }
+            } else if (data?.usageType === 'school') {
+              const d = data.details || {};
+              const label = d.major || d.subject || '학습';
+              newNodes.push({ id: `onboard_${Date.now()}`, label, status: 'new', val: 25, category: baseCategory, description: '온보딩 - 학습' });
+            } else {
+              newNodes.push({ id: `onboard_${Date.now()}`, label: '사용자', status: 'new', val: 25, category: baseCategory });
+            }
+
+            const newLinks: Link[] = [];
+            const targetId = graphData.nodes.length > 0 ? graphData.nodes[0].id : (newNodes.length > 0 ? newNodes[0].id : 'root');
+            newNodes.forEach((n, i) => {
+              if (n.id !== targetId) newLinks.push({ source: targetId, target: n.id });
+              if (i < newNodes.length - 1) newLinks.push({ source: n.id, target: newNodes[i + 1].id });
+            });
+
+            setGraphData(prev => ({ nodes: [...prev.nodes, ...newNodes], links: [...prev.links, ...newLinks] }));
+            setScreen('graph');
+          }}
+          onBack={() => setScreen('onboarding')}
+        />
+      )}
       
       {screen === 'input' && (
         <InputScreen 
