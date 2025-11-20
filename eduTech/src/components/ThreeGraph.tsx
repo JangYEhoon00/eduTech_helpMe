@@ -1,7 +1,8 @@
+
 import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
-import { GraphData } from '../types';
-import { COLORS } from '../constants';
+import { GraphData } from '../utils/types';
+import { COLORS } from '../utils/constants';
 
 interface ThreeGraphProps {
   data: GraphData;
@@ -127,7 +128,7 @@ export const ThreeGraph: React.FC<ThreeGraphProps> = ({ data, onNodeClick, selec
     // Pre-calculate category centers
     const categories = Array.from(new Set(data.nodes.map(n => n.category)));
     const categoryCenters: Record<string, THREE.Vector3> = {};
-    categories.forEach((cat, i) => {
+    categories.forEach((cat: string, i) => {
       const phi = Math.acos(-1 + (2 * i) / categories.length);
       const theta = Math.sqrt(categories.length * Math.PI) * phi;
       categoryCenters[cat] = new THREE.Vector3(
