@@ -1,11 +1,11 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
-import { AnalysisResult, QuizData, MetaResult } from "../utils/types";
+import { AnalysisResult, QuizData, MetaResult, ChatMessage } from "../utils/types";
 
-const apiKey = process.env.API_KEY || '';
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
 const ai = new GoogleGenAI({ apiKey });
 
-const modelId = "gemini-2.5-flash";
+const modelId = "gemini-2.0-flash-exp";
 
 export const analyzeConcept = async (text: string): Promise<AnalysisResult | null> => {
   try {
@@ -120,6 +120,46 @@ export const evaluateMetaCognition = async (concept: string, explanation: string
     return null;
   } catch (error) {
     console.error("Gemini Meta Evaluation Error:", error);
+    return null;
+  }
+};
+
+export const chatWithBot = async (messages: ChatMessage[], activeSubconcept?: string): Promise<{ answer: string; subconcepts: string[] } | null> => {
+  try {
+    const history = messages.map(m => `${m.sender}: ${m.content}`).join('\n');
+    const context = activeSubconcept ? `Context: The user is asking about the subconcept "${activeSubconcept}".` : '';
+    
+    const response = await ai.models.generateContent({
+      model: modelId,
+      contents: `You are a helpful tutor AI.
+      ${context}
+      
+      Chat History:
+      ${history}
+      
+      User's last message is the last one in history.
+      Answer the user's question in Korean.
+      Also identify any subconcepts related to the answer.
+      
+      Return JSON: { "answer": "string", "subconcepts": ["string"] }`,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+           type: Type.OBJECT,
+           properties: {
+             answer: { type: Type.STRING },
+             subconcepts: { type: Type.ARRAY, items: { type: Type.STRING } }
+           }
+        }
+      }
+    });
+    
+    if (response.text) {
+      return JSON.parse(response.text);
+    }
+    return null;
+  } catch (error) {
+    console.error("Chat Error", error);
     return null;
   }
 };

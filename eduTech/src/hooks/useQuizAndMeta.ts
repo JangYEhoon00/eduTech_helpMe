@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { QuizData, MetaResult, Node } from '../utils/types';
 import { generateQuiz, evaluateMetaCognition } from '../services/geminiService';
+import { saveMetaResult } from '../services/supabaseService';
 
 export const useQuizAndMeta = () => {
   const [quizData, setQuizData] = useState<QuizData | null>(null);
@@ -30,6 +31,19 @@ export const useQuizAndMeta = () => {
     if (result) {
       setMetaResult(result);
       updateNodeStatus(selectedNode.id, result.status);
+
+      // Save detailed meta result to Supabase
+      try {
+        await saveMetaResult(
+          selectedNode.id,
+          result.score,
+          result.status,
+          result.feedback,
+          result.nextStep
+        );
+      } catch (error) {
+        console.error('Failed to save meta result:', error);
+      }
     }
   };
 

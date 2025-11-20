@@ -54,7 +54,7 @@ export interface FolderStructure {
   isOpen?: boolean;
 }
 
-export type ScreenState = 'onboarding' | 'onboardingFlow' | 'input' | 'graph' | 'metacheck' | 'quiz' | 'update' | 'daily' | 'dashboard';
+export type ScreenState = 'auth' | 'onboarding' | 'onboardingFlow' | 'input' | 'graph' | 'metacheck' | 'quiz' | 'update' | 'daily' | 'dashboard';
 
 // Chatbot
 export interface ChatMessage {

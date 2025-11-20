@@ -7,9 +7,21 @@ import { Node, Link, ChatMessage } from '../utils/types';
  * 현재 로그인한 사용자 정보 가져오기
  */
 export const getCurrentUser = async () => {
-  const { data: { user }, error } = await supabase.auth.getUser();
-  if (error) throw error;
-  return user;
+  try {
+    const { data: { user }, error } = await supabase.auth.getUser();
+    if (error) {
+      // 세션이 없거나 만료된 경우 null 반환 (에러 발생시키지 않음)
+      if (error.message.includes('Auth session missing') || error.message.includes('Invalid Refresh Token')) {
+        return null;
+      }
+      throw error;
+    }
+    return user;
+  } catch (error) {
+    // 그 외 에러는 null 반환하여 호출자가 처리하도록 함 (또는 로그 출력)
+    console.warn('Error getting current user:', error);
+    return null;
+  }
 };
 
 /**
