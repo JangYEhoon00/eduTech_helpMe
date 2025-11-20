@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ScreenState, Node, Link } from './utils/types';
+import { generateUUID } from './utils/uuid';
 import { HomeScreen } from './screens/HomeScreen';
 import { OnboardingFlow } from './components/OnboardingFlow';
 import { InputScreen } from './screens/InputScreen';
@@ -82,7 +83,7 @@ export default function App() {
     if (!analysisResult) return;
 
     const newNodes: Node[] = editableConcepts.map((c, i) => ({
-      id: `new_${Date.now()}_${i}`,
+      id: generateUUID(),
       label: c.label,
       status: c.status as any,
       val: 25,
@@ -110,7 +111,7 @@ export default function App() {
   // Save concept from chatbot to graph
   const handleSaveConceptToGraph = (concept: string) => {
     const newNode: Node = {
-      id: `chatbot_${Date.now()}`,
+      id: generateUUID(),
       label: concept,
       status: 'new',
       val: 25,
@@ -182,20 +183,20 @@ export default function App() {
             const baseCategory = data?.usageType || '일반';
             const newNodes: Node[] = [];
             if (data?.usageType === 'work') {
-              newNodes.push({ id: `onboard_${Date.now()}` , label: data.details?.jobField || '업무', status: 'new', val: 25, category: baseCategory, description: '온보딩 - 직무' });
+              newNodes.push({ id: generateUUID(), label: data.details?.jobField || '업무', status: 'new', val: 25, category: baseCategory, description: '온보딩 - 직무' });
             } else if (data?.usageType === 'personal') {
               const keywords: string[] = data.details?.keywords || [];
               if (keywords.length > 0) {
-                keywords.forEach((k, i) => newNodes.push({ id: `onboard_${Date.now()}_${i}`, label: k, status: 'new', val: 20, category: baseCategory, description: '온보딩 - 관심사' }));
+                keywords.forEach((k, i) => newNodes.push({ id: generateUUID(), label: k, status: 'new', val: 20, category: baseCategory, description: '온보딩 - 관심사' }));
               } else {
-                newNodes.push({ id: `onboard_${Date.now()}`, label: data.details?.interestText || '관심사', status: 'new', val: 25, category: baseCategory, description: '온보딩 - 관심사' });
+                newNodes.push({ id: generateUUID(), label: data.details?.interestText || '관심사', status: 'new', val: 25, category: baseCategory, description: '온보딩 - 관심사' });
               }
             } else if (data?.usageType === 'school') {
               const d = data.details || {};
               const label = d.major || d.subject || '학습';
-              newNodes.push({ id: `onboard_${Date.now()}`, label, status: 'new', val: 25, category: baseCategory, description: '온보딩 - 학습' });
+              newNodes.push({ id: generateUUID(), label, status: 'new', val: 25, category: baseCategory, description: '온보딩 - 학습' });
             } else {
-              newNodes.push({ id: `onboard_${Date.now()}`, label: '사용자', status: 'new', val: 25, category: baseCategory });
+              newNodes.push({ id: generateUUID(), label: '사용자', status: 'new', val: 25, category: baseCategory });
             }
 
             const newLinks: Link[] = [];

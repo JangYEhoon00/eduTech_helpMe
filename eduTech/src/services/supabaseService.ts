@@ -314,21 +314,50 @@ export const saveNodeContent = async (
   const user = await getCurrentUser();
   if (!user) throw new Error('로그인이 필요합니다.');
 
-  // Upsert: 있으면 업데이트, 없으면 생성
-  const { data, error } = await supabase
+  // 1. 먼저 해당 노드의 콘텐츠가 있는지 확인
+  const { data: existingData } = await supabase
     .from('node_contents')
-    .upsert({
-      node_id: nodeId,
-      user_id: user.id,
-      title,
-      content,
-      last_saved: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    }, {
-      onConflict: 'node_id,user_id'
-    })
-    .select()
+    .select('id')
+    .eq('node_id', nodeId)
+    .eq('user_id', user.id)
     .single();
+
+  let data, error;
+
+  if (existingData) {
+    // 2. 있으면 업데이트
+    const result = await supabase
+      .from('node_contents')
+      .update({
+        title,
+        content,
+        last_saved: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', existingData.id)
+      .select()
+      .single();
+      
+    data = result.data;
+    error = result.error;
+  } else {
+    // 3. 없으면 생성
+    const result = await supabase
+      .from('node_contents')
+      .insert({
+        node_id: nodeId,
+        user_id: user.id,
+        title,
+        content,
+        last_saved: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .select()
+      .single();
+
+    data = result.data;
+    error = result.error;
+  }
 
   if (error) throw error;
   return data;

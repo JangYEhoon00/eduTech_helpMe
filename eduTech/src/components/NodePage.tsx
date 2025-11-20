@@ -18,6 +18,68 @@ export const NodePage = ({ node }: NodePageProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const contentRef = useRef<HTMLTextAreaElement>(null);
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // STT 관련 상태
+  const [isRecording, setIsRecording] = useState(false);
+  const recognitionRef = useRef<any>(null);
+
+  // STT 초기화
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        recognitionRef.current = new SpeechRecognition();
+        recognitionRef.current.continuous = true;
+        recognitionRef.current.interimResults = true;
+        recognitionRef.current.lang = 'ko-KR'; // 한국어 설정
+
+        recognitionRef.current.onresult = (event: any) => {
+          let finalTranscript = '';
+          
+          for (let i = event.resultIndex; i < event.results.length; ++i) {
+            if (event.results[i].isFinal) {
+              finalTranscript += event.results[i][0].transcript;
+            }
+          }
+
+          if (finalTranscript) {
+            setContent(prev => {
+              const newContent = prev ? `${prev}\n${finalTranscript}` : finalTranscript;
+              return newContent;
+            });
+          }
+        };
+
+        recognitionRef.current.onerror = (event: any) => {
+          console.error('Speech recognition error', event.error);
+          setIsRecording(false);
+        };
+
+        recognitionRef.current.onend = () => {
+          // 의도적으로 끈 게 아니면 다시 시작할 수도 있지만, 여기서는 일단 멈춤 상태로 둠
+          if (isRecording) {
+             // setIsRecording(false); // 상태 동기화
+          }
+        };
+      }
+    }
+  }, []);
+
+  const toggleRecording = () => {
+    if (!recognitionRef.current) {
+      alert('이 브라우저는 음성 인식을 지원하지 않습니다.');
+      return;
+    }
+
+    if (isRecording) {
+      recognitionRef.current.stop();
+      setIsRecording(false);
+    } else {
+      recognitionRef.current.start();
+      setIsRecording(true);
+      setIsEditing(true); // 녹음 시작하면 편집 모드로 전환
+    }
+  };
 
   // 노드 콘텐츠 불러오기
   useEffect(() => {
@@ -82,7 +144,7 @@ export const NodePage = ({ node }: NodePageProps) => {
         setIsEditing(false);
       }
     } catch (error: any) {
-      console.error('저장 실패:', error);
+      console.error('저장 실패:', JSON.stringify(error, null, 2));
       setSaveError(error.message || '저장에 실패했습니다.');
     } finally {
       setIsSaving(false);
@@ -181,9 +243,16 @@ export const NodePage = ({ node }: NodePageProps) => {
               <Save className="w-4 h-4" />
               {isSaving ? '저장 중...' : 'Save'}
             </button>
-            <button className="px-6 py-3 bg-slate-800 text-white rounded-xl font-bold text-sm border border-slate-700 hover:bg-slate-700 transition-colors flex items-center gap-2">
-              <Mic className="w-4 h-4 text-emerald-400" />
-              Voice Note
+            <button 
+              onClick={toggleRecording}
+              className={`px-6 py-3 rounded-xl font-bold text-sm border transition-all flex items-center gap-2 ${
+                isRecording 
+                  ? 'bg-red-500/20 text-red-400 border-red-500/50 animate-pulse' 
+                  : 'bg-slate-800 text-white border-slate-700 hover:bg-slate-700'
+              }`}
+            >
+              <Mic className={`w-4 h-4 ${isRecording ? 'text-red-400' : 'text-emerald-400'}`} />
+              {isRecording ? 'Recording...' : 'Voice Note'}
             </button>
           </div>
 
