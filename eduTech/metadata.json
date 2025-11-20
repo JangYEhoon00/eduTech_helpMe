@@ -1,0 +1,5 @@
+{
+  "name": "NeuroSphere OS",
+  "description": "A 3D immersive Second Brain interface that visualizes knowledge, generates quizzes, and tracks metacognition using Gemini AI.",
+  "requestFramePermissions": []
+}
