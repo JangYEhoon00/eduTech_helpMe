@@ -141,7 +141,7 @@ export default function App() {
                 const result = await signIn(email, password);
                 if (result) {
                   setScreen('onboarding');
-                  navigate('/onboarding');
+                  navigate('/');
                   return { success: true };
                 }
                 return { success: false, error: '로그인에 실패했습니다.' };
@@ -155,7 +155,7 @@ export default function App() {
                 const result = await signUp(email, password);
                 if (result) {
                   setScreen('onboarding');
-                  navigate('/onboarding');
+                  navigate('/');
                   return { success: true };
                 }
                 return { success: false, error: '회원가입에 실패했습니다.' };
@@ -168,7 +168,7 @@ export default function App() {
                 const result = await signInAnonymously();
                 if (result) {
                   setScreen('onboarding');
-                  navigate('/onboarding');
+                  navigate('/');
                   return { success: true };
                 }
                 return { success: false, error: '익명 로그인에 실패했습니다.' };
