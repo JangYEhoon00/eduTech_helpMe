@@ -9,6 +9,7 @@ interface ChatWindowProps {
   isLoading: boolean;
   activeSubconcept: string | null;
   isOpen: boolean;
+  isDisabled?: boolean;
   onInputChange: (value: string) => void;
   onSend: () => void;
   onKeyPress: (e: React.KeyboardEvent) => void;
@@ -23,6 +24,7 @@ export const ChatWindow = ({
   isLoading,
   activeSubconcept,
   isOpen,
+  isDisabled = false,
   onInputChange,
   onSend,
   onKeyPress,
@@ -113,13 +115,13 @@ export const ChatWindow = ({
           value={inputText}
           onChange={(e) => onInputChange(e.target.value)}
           onKeyPress={onKeyPress}
-          placeholder="메시지를 입력하세요..."
+          placeholder={isDisabled ? "사이드바가 열려있을 때는 사용할 수 없습니다" : "메시지를 입력하세요..."}
           className="flex-1 bg-slate-800 text-white rounded-xl px-4 py-2.5 border border-slate-700 focus:border-indigo-500 outline-none transition-all duration-300 text-sm"
-          disabled={isLoading}
+          disabled={isLoading || isDisabled}
         />
         <button
           onClick={onSend}
-          disabled={!inputText.trim() || isLoading}
+          disabled={!inputText.trim() || isLoading || isDisabled}
           className="w-10 h-10 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-700 disabled:cursor-not-allowed text-white rounded-xl flex items-center justify-center transition-all duration-300"
         >
           <Send className="w-4 h-4" />

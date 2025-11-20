@@ -172,7 +172,7 @@ export default function App() {
       )}
 
       {/* Global Chatbot - visible from main page onwards */}
-      {screen !== 'onboarding' && <Chatbot onSaveToGraph={handleSaveConceptToGraph} />}
+      {screen !== 'onboarding' && <Chatbot onSaveToGraph={handleSaveConceptToGraph} isDisabled={selectedNode !== null} />}
     </>
   );
 }
