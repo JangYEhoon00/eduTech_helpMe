@@ -41,7 +41,7 @@ export const NodeChatbot = ({ node, onSaveSubconcept }: NodeChatbotProps) => {
 
   const generateInitialSubconcepts = async () => {
     try {
-      const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+      const apiKey = import.meta.env.VITE_GPT_API_KEY;
       if (!apiKey) return;
 
       const openai = new OpenAI({ apiKey, dangerouslyAllowBrowser: true });
@@ -74,7 +74,7 @@ export const NodeChatbot = ({ node, onSaveSubconcept }: NodeChatbotProps) => {
     setIsLoading(true);
 
     try {
-      const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+      const apiKey = import.meta.env.VITE_GPT_API_KEY;
       if (!apiKey) {
         throw new Error('API 키가 설정되지 않았습니다.');
       }

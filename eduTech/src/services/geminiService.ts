@@ -5,7 +5,7 @@ const modelId = "gpt-4o-mini";
 
 // Helper function to get OpenAI instance with API key
 const getOpenAI = () => {
-  const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+  const apiKey = import.meta.env.VITE_GPT_API_KEY;
   if (!apiKey) {
     throw new Error('OpenAI API key is missing. Please provide a valid API key.');
   }
