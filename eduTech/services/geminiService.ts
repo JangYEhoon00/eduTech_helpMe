@@ -171,3 +171,35 @@ Provide a helpful, clear, and concise response. Also, identify 3-8 key subconcep
     return null;
   }
 };
+export const suggestInterests = async (text: string): Promise<string[]> => {
+  try {
+    const response = await ai.models.generateContent({
+      model: modelId,
+      contents: `Analyze the following text describing a user's interests and extract 5-10 key interest keywords or topics.
+      User Text: "${text}"
+      
+      Return a JSON object with a "keywords" array of strings. In Korean.`,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            keywords: {
+              type: Type.ARRAY,
+              items: { type: Type.STRING }
+            }
+          }
+        }
+      }
+    });
+
+    if (response.text) {
+      const data = JSON.parse(response.text);
+      return data.keywords || [];
+    }
+    return [];
+  } catch (error) {
+    console.error("Gemini Interest Suggestion Error:", error);
+    return [];
+  }
+};

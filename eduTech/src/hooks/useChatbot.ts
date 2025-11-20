@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ChatMessage } from '../utils/types';
 import { chatWithBot } from '../../services/geminiService';
+import { fetchChatMessages, saveChatMessage } from '../services/supabaseService';
 
 export const useChatbot = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -8,6 +9,21 @@ export const useChatbot = () => {
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [activeSubconcept, setActiveSubconcept] = useState<string | null>(null);
+
+  // Load chat history on mount
+  useEffect(() => {
+    const loadHistory = async () => {
+      try {
+        const history = await fetchChatMessages();
+        if (history && history.length > 0) {
+          setMessages(history);
+        }
+      } catch (error) {
+        console.error('Failed to load chat history:', error);
+      }
+    };
+    loadHistory();
+  }, []);
 
   const handleSend = async () => {
     if (!inputText.trim() || isLoading) return;
@@ -19,10 +35,18 @@ export const useChatbot = () => {
       timestamp: new Date()
     };
 
+    // Optimistic update
     const updatedMessages = [...messages, userMessage];
     setMessages(updatedMessages);
     setInputText('');
     setIsLoading(true);
+
+    // Save user message
+    try {
+      await saveChatMessage(userMessage);
+    } catch (error) {
+      console.error('Failed to save user message:', error);
+    }
 
     const botResponse = await chatWithBot(updatedMessages, activeSubconcept || undefined);
     
@@ -34,7 +58,15 @@ export const useChatbot = () => {
         timestamp: new Date(),
         subconcepts: botResponse.subconcepts
       };
-      setMessages([...updatedMessages, botMessage]);
+      
+      setMessages(prev => [...prev, botMessage]);
+
+      // Save bot message
+      try {
+        await saveChatMessage(botMessage);
+      } catch (error) {
+        console.error('Failed to save bot message:', error);
+      }
     }
     
     setIsLoading(false);

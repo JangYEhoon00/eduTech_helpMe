@@ -7,9 +7,21 @@ import { Node, Link, ChatMessage } from '../utils/types';
  * 현재 로그인한 사용자 정보 가져오기
  */
 export const getCurrentUser = async () => {
-  const { data: { user }, error } = await supabase.auth.getUser();
-  if (error) throw error;
-  return user;
+  try {
+    const { data: { user }, error } = await supabase.auth.getUser();
+    if (error) {
+      // 세션이 없거나 만료된 경우 null 반환 (에러 발생시키지 않음)
+      if (error.message.includes('Auth session missing') || error.message.includes('Invalid Refresh Token')) {
+        return null;
+      }
+      throw error;
+    }
+    return user;
+  } catch (error) {
+    // 그 외 에러는 null 반환하여 호출자가 처리하도록 함 (또는 로그 출력)
+    console.warn('Error getting current user:', error);
+    return null;
+  }
 };
 
 /**
@@ -20,7 +32,11 @@ export const signUp = async (email: string, password: string) => {
     email,
     password,
   });
-  if (error) throw error;
+  if (error) {
+    console.error('Supabase SignUp Error:', error);
+    throw error;
+  }
+  console.log('Supabase: 회원가입 요청 성공', data);
   return data;
 };
 
@@ -33,6 +49,7 @@ export const signIn = async (email: string, password: string) => {
     password,
   });
   if (error) throw error;
+  console.log('Supabase: 로그인 요청 성공', data);
   return data;
 };
 
@@ -115,6 +132,7 @@ export const createNode = async (node: Node): Promise<Node> => {
     .single();
 
   if (error) throw error;
+  console.log('Supabase: 노드 생성 성공', data);
   return data;
 };
 
@@ -377,6 +395,7 @@ export const saveChatMessage = async (message: ChatMessage): Promise<void> => {
     });
 
   if (error) throw error;
+  console.log('Supabase: 채팅 메시지 저장 성공');
 };
 
 /**

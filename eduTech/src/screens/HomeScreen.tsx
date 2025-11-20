@@ -27,7 +27,7 @@ export const HomeScreen = ({ setScreen }: HomeScreenProps) => (
       
       <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md animate-smooth-slide-up" style={{animationDelay: '0.3s'}}>
         <button 
-          onClick={() => setScreen('graph')}
+          onClick={() => setScreen('onboardingFlow')}
           className="flex-1 py-4 px-6 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl font-bold text-lg transition-all duration-300 shadow-[0_0_30px_rgba(79,70,229,0.2)] hover:shadow-[0_0_40px_rgba(79,70,229,0.4)] hover:scale-105 flex items-center justify-center gap-2"
         >
           <Play className="w-5 h-5 fill-current" /> 뇌 탐험하기
