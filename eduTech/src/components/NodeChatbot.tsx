@@ -52,7 +52,7 @@ export const NodeChatbot = ({ node, onSaveSubconcept }: NodeChatbotProps) => {
       형식: 개념1, 개념2, 개념3`;
 
       const result = await ai.models.generateContent({
-        model: 'gemini-2.0-flash-exp',
+        model: 'gemini-1.5-flash',
         contents: prompt
       });
       const text = result.text || '';
@@ -91,7 +91,7 @@ ${messages.map(m => `${m.role === 'user' ? '학생' : 'AI'}: ${m.content}`).join
 위 맥락을 고려하여 "${node.label}"에 대한 학생의 질문에 친절하고 명확하게 답변해주세요.`;
 
       const result = await ai.models.generateContent({
-        model: 'gemini-2.0-flash-exp',
+        model: 'gemini-1.5-flash',
         contents: context
       });
       const aiResponse = result.text || '';

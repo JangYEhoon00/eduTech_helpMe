@@ -2,7 +2,7 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { AnalysisResult, QuizData, MetaResult, ChatMessage } from "../utils/types";
 
-const modelId = "gemini-2.0-flash-exp";
+const modelId = "gemini-1.5-flash";
 
 // Helper function to get AI instance with API key
 const getAI = () => {
