@@ -87,28 +87,41 @@ export const FolderItem: React.FC<FolderItemProps> = ({
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
             {/* Show Filter Toggle only for Category Folders (2nd level, id starts with sub_) */}
             {item.id.startsWith('sub_') && (
-                <>
-                  <button 
-                      onClick={(e) => { e.stopPropagation(); toggleCategoryVisibility(item.name); }}
-                      className={`p-1 transition-colors hover:text-white ${isHidden ? 'text-slate-600' : 'text-indigo-400'}`}
-                      title={isHidden ? "Show Category" : "Hide Category"}
-                  >
-                      {isHidden ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (window.confirm(`'${item.name}' 카테고리의 모든 노드를 삭제하시겠습니까?`)) {
-                        removeCategory(item.name);
-                      }
-                    }}
-                    className="p-1 hover:text-red-400 text-slate-600 transition-colors"
-                    title="Delete Category"
-                  >
-                    <Trash2 className="w-3 h-3" />
-                  </button>
-                </>
+                <button 
+                    onClick={(e) => { e.stopPropagation(); toggleCategoryVisibility(item.name); }}
+                    className={`p-1 transition-colors hover:text-white ${isHidden ? 'text-slate-600' : 'text-indigo-400'}`}
+                    title={isHidden ? "Show Category" : "Hide Category"}
+                >
+                    {isHidden ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                </button>
             )}
+            
+            {/* Delete button for ALL folders */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                if (window.confirm(`'${item.name}' 폴더${item.id.startsWith('sub_') ? '의 모든 노드' : '와 하위 항목'}를 삭제하시겠습니까?`)) {
+                  if (item.id.startsWith('sub_')) {
+                    // Category folder - delete all nodes in category
+                    removeCategory(item.name);
+                  } else {
+                    // Regular folder - delete its children nodes
+                    if (item.children) {
+                      item.children.forEach(child => {
+                        if (child.type === 'file' && child.nodeId) {
+                          removeNode(child.nodeId);
+                        }
+                      });
+                    }
+                  }
+                }
+              }}
+              className="p-1 hover:text-red-400 text-slate-600 transition-colors"
+              title="Delete Folder"
+            >
+              <Trash2 className="w-3 h-3" />
+            </button>
+            
             <button 
             onClick={(e) => { e.stopPropagation(); setIsEditing(!isEditing); }}
             className="p-1 hover:text-indigo-400 text-slate-600 transition-colors"

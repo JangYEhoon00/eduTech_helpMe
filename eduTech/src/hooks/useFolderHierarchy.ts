@@ -6,37 +6,25 @@ export const useFolderHierarchy = (nodes: Node[]) => {
 
   useEffect(() => {
     const buildTree = () => {
-      const tree: FolderStructure[] = [
-        { id: 'root_cs', name: 'Computer Science', type: 'folder', isOpen: true, children: [] },
-        { id: 'root_math', name: 'Mathematics', type: 'folder', isOpen: false, children: [] },
-        { id: 'root_other', name: 'General Knowledge', type: 'folder', isOpen: true, children: [] }
-      ];
-
-      const getParentFolder = (cat: string) => {
-        const lower = cat.toLowerCase();
-        if (['core', 'architecture', 'infrastructure', 'skill', 'training', 'ai', 'data'].some(k => lower.includes(k))) return tree[0]; // CS
-        if (['math', 'concept', 'theory'].some(k => lower.includes(k))) return tree[1]; // Math
-        return tree[2];
-      };
+      // Build tree dynamically from node categories only
+      const categoryMap = new Map<string, FolderStructure>();
 
       nodes.forEach(node => {
-        const root = getParentFolder(node.category);
-        
-        // 2nd Level: Use Category as Subfolder
-        let subFolder = root.children?.find(c => c.name === node.category);
-        if (!subFolder) {
-          subFolder = { 
+        // Get or create category folder
+        let categoryFolder = categoryMap.get(node.category);
+        if (!categoryFolder) {
+          categoryFolder = { 
             id: `sub_${node.category}`, 
             name: node.category, 
             type: 'folder', 
-            isOpen: false, 
+            isOpen: true, 
             children: [] 
           };
-          root.children?.push(subFolder);
+          categoryMap.set(node.category, categoryFolder);
         }
 
-        // 3rd Level: The Node itself
-        subFolder.children?.push({
+        // Add node as file to category folder
+        categoryFolder.children?.push({
           id: `file_${node.id}`,
           name: node.label,
           type: 'file',
@@ -44,7 +32,8 @@ export const useFolderHierarchy = (nodes: Node[]) => {
         });
       });
 
-      return tree;
+      // Convert map to array
+      return Array.from(categoryMap.values());
     };
 
     setFolderData(buildTree());
