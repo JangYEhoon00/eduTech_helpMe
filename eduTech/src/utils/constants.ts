@@ -1,4 +1,5 @@
 
+// 지식 이해도에 따른 색상
 export const COLORS = {
   known: 0x10B981,   // Emerald 500 (이해 완료)
   fuzzy: 0xF59E0B,   // Amber 500 (애매함)
@@ -7,7 +8,7 @@ export const COLORS = {
   default: 0x94A3B8, // Slate 400
   bg: 0x000000       // Pure Black for Space effect
 };
-
+// todo 상수화된 데이터 서버 통신으로 데이터 받아오기
 export const INITIAL_NODES = [
   { id: 'root', label: 'LLM (대규모언어모델)', status: 'known', val: 30, category: 'Core', description: '방대한 텍스트 데이터로 학습된 인공지능 모델입니다.' },
   { id: 'c1', label: 'Transformer', status: 'fuzzy', val: 25, category: 'Architecture', description: 'Attention 메커니즘을 사용하는 딥러닝 아키텍처입니다.' },

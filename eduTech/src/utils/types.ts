@@ -55,3 +55,12 @@ export interface FolderStructure {
 }
 
 export type ScreenState = 'onboarding' | 'input' | 'graph' | 'metacheck' | 'quiz' | 'update' | 'daily' | 'dashboard';
+
+// Chatbot
+export interface ChatMessage {
+  id: string;
+  sender: 'user' | 'bot';
+  content: string;
+  timestamp: Date;
+  subconcepts?: string[]; // AI-generated subconcepts for bot messages
+}

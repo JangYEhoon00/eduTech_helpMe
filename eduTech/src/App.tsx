@@ -1,109 +1,57 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { analyzeConcept, generateQuiz, evaluateMetaCognition } from './services/geminiService';
-import { INITIAL_NODES, INITIAL_LINKS } from './utils/constants';
-import { Node, Link, GraphData, ScreenState, AnalysisResult, QuizData, MetaResult, FolderStructure } from './utils/types';
+import React, { useState } from 'react';
+import { ScreenState, Node, Link } from './utils/types';
 import { HomeScreen } from './screens/HomeScreen';
 import { InputScreen } from './screens/InputScreen';
 import { GraphScreen } from './screens/GraphScreen';
 import { MetaCheckScreen } from './screens/MetaCheckScreen';
 import { QuizScreen } from './screens/QuizScreen';
+import { Chatbot } from './components/Chatbot';
+import { useGraphData } from './hooks/useGraphData';
+import { useFolderHierarchy } from './hooks/useFolderHierarchy';
+import { useInputAnalysis } from './hooks/useInputAnalysis';
+import { useQuizAndMeta } from './hooks/useQuizAndMeta';
 
 export default function App() {
   const [screen, setScreen] = useState<ScreenState>('onboarding');
-  const [graphData, setGraphData] = useState<GraphData>({ nodes: INITIAL_NODES as any, links: INITIAL_LINKS });
-  const [selectedNode, setSelectedNode] = useState<Node | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
 
-  // Input / Q&A Logic
-  const [inputText, setInputText] = useState('');
-  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
-  const [editableConcepts, setEditableConcepts] = useState<any[]>([]);
-  const [isSaved, setIsSaved] = useState(false); 
+  // Custom hooks for state management
+  const {
+    graphData,
+    setGraphData,
+    selectedNode,
+    setSelectedNode,
+    hiddenCategories,
+    uniqueCategories,
+    toggleCategoryVisibility,
+    updateNodeStatus
+  } = useGraphData();
 
-  // Save Modal State
-  const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
+  const { folderData, toggleFolder, renameFolder } = useFolderHierarchy(graphData.nodes);
 
-  // Quiz & Meta
-  const [quizData, setQuizData] = useState<QuizData | null>(null);
-  const [userExplanation, setUserExplanation] = useState('');
-  const [metaResult, setMetaResult] = useState<MetaResult | null>(null);
+  const {
+    inputText,
+    setInputText,
+    analysisResult,
+    setAnalysisResult,
+    editableConcepts,
+    isSaved,
+    setIsSaved,
+    isSaveModalOpen,
+    setIsSaveModalOpen,
+    isLoading: inputLoading,
+    handleAsk,
+    handleInitialSave
+  } = useInputAnalysis();
 
-  // Sidebar Logic (Hierarchical & Filtering)
-  const [folderData, setFolderData] = useState<FolderStructure[]>([]);
-  const [hiddenCategories, setHiddenCategories] = useState<string[]>([]);
-
-  // Unique categories for selection
-  const uniqueCategories = useMemo(() => {
-    return Array.from(new Set(graphData.nodes.map(n => n.category))).sort();
-  }, [graphData.nodes]);
-
-  // --- Logic to build academic hierarchy from nodes ---
-  useEffect(() => {
-    const buildTree = () => {
-      const tree: FolderStructure[] = [
-        { id: 'root_cs', name: 'Computer Science', type: 'folder', isOpen: true, children: [] },
-        { id: 'root_math', name: 'Mathematics', type: 'folder', isOpen: false, children: [] },
-        { id: 'root_other', name: 'General Knowledge', type: 'folder', isOpen: true, children: [] }
-      ];
-
-      const getParentFolder = (cat: string) => {
-        const lower = cat.toLowerCase();
-        if (['core', 'architecture', 'infrastructure', 'skill', 'training', 'ai', 'data'].some(k => lower.includes(k))) return tree[0]; // CS
-        if (['math', 'concept', 'theory'].some(k => lower.includes(k))) return tree[1]; // Math
-        return tree[2];
-      };
-
-      graphData.nodes.forEach(node => {
-        const root = getParentFolder(node.category);
-        
-        // 2nd Level: Use Category as Subfolder
-        let subFolder = root.children?.find(c => c.name === node.category);
-        if (!subFolder) {
-          subFolder = { 
-            id: `sub_${node.category}`, 
-            name: node.category, 
-            type: 'folder', 
-            isOpen: false, 
-            children: [] 
-          };
-          root.children?.push(subFolder);
-        }
-
-        // 3rd Level: The Node itself
-        subFolder.children?.push({
-          id: `file_${node.id}`,
-          name: node.label,
-          type: 'file',
-          nodeId: node.id
-        });
-      });
-
-      return tree;
-    };
-
-    setFolderData(buildTree());
-  }, [graphData.nodes]);
-
-  // --- Handlers ---
-
-  const handleAsk = async () => {
-    if (!inputText.trim()) return;
-    setIsLoading(true);
-    setIsSaved(false); 
-    const result = await analyzeConcept(inputText);
-    setIsLoading(false);
-    if (result) {
-      setAnalysisResult(result);
-      // Initialize editable concepts state
-      setEditableConcepts(result.concepts.map(c => ({...c})));
-    }
-  };
-
-  // Open Save Modal
-  const handleInitialSave = () => {
-    if (!analysisResult || isSaved) return;
-    setIsSaveModalOpen(true);
-  };
+  const {
+    quizData,
+    userExplanation,
+    setUserExplanation,
+    metaResult,
+    isLoading: quizMetaLoading,
+    startQuiz,
+    submitMetaCheck
+  } = useQuizAndMeta();
 
   // Execute Save with Selected Directory/Category
   const handleFinalSave = (targetCategory: string) => {
@@ -114,20 +62,19 @@ export default function App() {
       label: c.label,
       status: c.status as any,
       val: 25,
-      category: targetCategory, // Overwrite with user selected folder/category
+      category: targetCategory,
       description: c.description
     }));
 
     const newLinks: Link[] = [];
-    // Find a node to link to in the same category, or root if none
     const sameCatNode = graphData.nodes.find(n => n.category === targetCategory);
     const targetId = sameCatNode ? sameCatNode.id : (graphData.nodes.length > 0 ? graphData.nodes[0].id : 'root');
     
     newNodes.forEach((n, i) => {
-        newLinks.push({ source: targetId, target: n.id });
-        if (i < newNodes.length - 1) {
-            newLinks.push({ source: n.id, target: newNodes[i+1].id });
-        }
+      newLinks.push({ source: targetId, target: n.id });
+      if (i < newNodes.length - 1) {
+        newLinks.push({ source: n.id, target: newNodes[i+1].id });
+      }
     });
 
     setGraphData(prev => ({
@@ -139,62 +86,30 @@ export default function App() {
     setIsSaveModalOpen(false);
   };
 
-  // Sidebar Folder Actions
-  const toggleFolder = (id: string) => {
-    const toggleRecursive = (items: FolderStructure[]): FolderStructure[] => {
-      return items.map(item => {
-        if (item.id === id) return { ...item, isOpen: !item.isOpen };
-        if (item.children) return { ...item, children: toggleRecursive(item.children) };
-        return item;
-      });
+  // Save concept from chatbot to graph
+  const handleSaveConceptToGraph = (concept: string) => {
+    const newNode: Node = {
+      id: `chatbot_${Date.now()}`,
+      label: concept,
+      status: 'new',
+      val: 25,
+      category: graphData.nodes.length > 0 ? graphData.nodes[0].category : '일반',
+      description: `챗봇에서 추가된 개념: ${concept}`
     };
-    setFolderData(prev => toggleRecursive(prev));
-  };
 
-  const renameFolder = (id: string, newName: string) => {
-    const renameRecursive = (items: FolderStructure[]): FolderStructure[] => {
-      return items.map(item => {
-        if (item.id === id) return { ...item, name: newName };
-        if (item.children) return { ...item, children: renameRecursive(item.children) };
-        return item;
-      });
-    };
-    setFolderData(prev => renameRecursive(prev));
-  };
-
-  const toggleCategoryVisibility = (categoryName: string) => {
-    setHiddenCategories(prev => {
-        if (prev.includes(categoryName)) {
-            return prev.filter(c => c !== categoryName);
-        } else {
-            return [...prev, categoryName];
-        }
-    });
-  };
-
-  const startQuiz = async () => {
-    if (!selectedNode) return;
-    setIsLoading(true);
-    const quiz = await generateQuiz(selectedNode.label);
-    setIsLoading(false);
-    if (quiz) {
-      setQuizData(quiz);
-      setScreen('quiz');
+    // Link to the first node (root concept) if exists
+    const newLinks: Link[] = [];
+    if (graphData.nodes.length > 0) {
+      newLinks.push({ source: graphData.nodes[0].id, target: newNode.id });
     }
-  };
 
-  const submitMetaCheck = async () => {
-    if (!selectedNode) return;
-    setIsLoading(true);
-    const result = await evaluateMetaCognition(selectedNode.label, userExplanation);
-    setIsLoading(false);
-    if (result) {
-      setMetaResult(result);
-      setGraphData(prev => ({
-        nodes: prev.nodes.map(n => n.id === selectedNode.id ? { ...n, status: result.status } : n),
-        links: prev.links
-      }));
-    }
+    setGraphData(prev => ({
+      nodes: [...prev.nodes, newNode],
+      links: [...prev.links, ...newLinks]
+    }));
+
+    // Switch to graph screen to show the new node
+    setScreen('graph');
   };
 
   return (
@@ -206,7 +121,7 @@ export default function App() {
           inputText={inputText}
           setInputText={setInputText}
           handleAsk={handleAsk}
-          isLoading={isLoading}
+          isLoading={inputLoading}
           analysisResult={analysisResult}
           setAnalysisResult={setAnalysisResult}
           editableConcepts={editableConcepts}
@@ -233,7 +148,7 @@ export default function App() {
           toggleCategoryVisibility={toggleCategoryVisibility}
           hiddenCategories={hiddenCategories}
           graphData={graphData}
-          startQuiz={startQuiz}
+          startQuiz={() => startQuiz(selectedNode, setScreen)}
         />
       )}
 
@@ -244,8 +159,8 @@ export default function App() {
           selectedNode={selectedNode}
           userExplanation={userExplanation}
           setUserExplanation={setUserExplanation}
-          submitMetaCheck={submitMetaCheck}
-          isLoading={isLoading}
+          submitMetaCheck={() => submitMetaCheck(selectedNode, updateNodeStatus)}
+          isLoading={quizMetaLoading}
         />
       )}
 
@@ -255,6 +170,9 @@ export default function App() {
           quizData={quizData}
         />
       )}
+
+      {/* Global Chatbot - visible from main page onwards */}
+      {screen !== 'onboarding' && <Chatbot onSaveToGraph={handleSaveConceptToGraph} />}
     </>
   );
 }

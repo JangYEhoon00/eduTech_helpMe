@@ -1,8 +1,8 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
-import { AnalysisResult, QuizData, MetaResult } from ".";
+import { AnalysisResult, QuizData, MetaResult, ChatMessage } from "../src/utils/types";
 
-const apiKey = process.env.API_KEY || '';
+const apiKey = process.env.GEMINI_API_KEY || '';
 const ai = new GoogleGenAI({ apiKey });
 
 const modelId = "gemini-2.5-flash";
@@ -120,6 +120,54 @@ export const evaluateMetaCognition = async (concept: string, explanation: string
     return null;
   } catch (error) {
     console.error("Gemini Meta Evaluation Error:", error);
+    return null;
+  }
+};
+
+export const chatWithBot = async (messages: ChatMessage[], activeSubconcept?: string): Promise<{ answer: string; subconcepts: string[] } | null> => {
+  try {
+    // Build conversation history for context
+    const conversationHistory = messages
+      .map(msg => `${msg.sender === 'user' ? 'User' : 'Assistant'}: ${msg.content}`)
+      .join('\n');
+
+    const contextPrompt = activeSubconcept 
+      ? `The user has selected the subconcept "${activeSubconcept}" and wants to learn more about it specifically.`
+      : '';
+
+    const response = await ai.models.generateContent({
+      model: modelId,
+      contents: `You are a helpful AI tutor assistant. Answer the user's question in Korean with plain text (no markdown formatting).
+      
+Conversation History:
+${conversationHistory}
+
+${contextPrompt}
+
+Provide a helpful, clear, and concise response. Also, identify 3-8 key subconcepts or related topics that the user might want to explore further. Return as JSON.`,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            answer: { type: Type.STRING, description: "The direct answer to the user's question. Plain text only." },
+            subconcepts: {
+              type: Type.ARRAY,
+              items: { type: Type.STRING },
+              description: "3-8 key subconcepts or related topics for further exploration"
+            }
+          },
+          required: ['answer', 'subconcepts']
+        }
+      }
+    });
+
+    if (response.text) {
+      return JSON.parse(response.text) as { answer: string; subconcepts: string[] };
+    }
+    return null;
+  } catch (error) {
+    console.error("Gemini Chat Error:", error);
     return null;
   }
 };
