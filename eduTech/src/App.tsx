@@ -19,7 +19,7 @@ import { useQuizAndMeta } from './hooks/useQuizAndMeta';
 import { useAuth } from './hooks/useAuth';
 
 export default function App() {
-  const [screen, setScreen] = useState<ScreenState>('onboarding');
+  const [screen, setScreen] = useState<ScreenState>('home');
   const navigate = useNavigate();
 
   // Authentication
@@ -68,12 +68,26 @@ export default function App() {
     submitMetaCheck
   } = useQuizAndMeta();
 
-  // Redirect to auth screen if not authenticated
+  // Handle authentication and initial routing
   useEffect(() => {
-    if (!authLoading && !user && screen !== 'auth') {
+    if (authLoading) return;
+
+    // If not logged in, redirect to auth screen
+    if (!user && screen !== 'auth') {
       setScreen('auth');
+      return;
     }
-  }, [authLoading, user, screen]);
+
+    // If logged in and not on a specific screen yet
+    if (user && screen === 'home') {
+      // If user has graph data, they've completed onboarding - go to graph
+      if (!graphLoading && graphData.nodes.length > 0) {
+        setScreen('graph');
+        navigate('/graph');
+      }
+      // Otherwise, stay on home to go through onboarding
+    }
+  }, [authLoading, user, screen, graphLoading, graphData.nodes.length, navigate]);
 
 
   // Execute Save with Selected Directory/Category
@@ -140,7 +154,7 @@ export default function App() {
               try {
                 const result = await signIn(email, password);
                 if (result) {
-                  setScreen('onboarding');
+                  setScreen('home');
                   navigate('/');
                   return { success: true };
                 }
@@ -154,7 +168,7 @@ export default function App() {
               try {
                 const result = await signUp(email, password);
                 if (result) {
-                  setScreen('onboarding');
+                  setScreen('home');
                   navigate('/');
                   return { success: true };
                 }
@@ -167,7 +181,7 @@ export default function App() {
               try {
                 const result = await signInAnonymously();
                 if (result) {
-                  setScreen('onboarding');
+                  setScreen('home');
                   navigate('/');
                   return { success: true };
                 }
@@ -178,9 +192,10 @@ export default function App() {
             }}
             loading={authLoading}
           />
-        ) : screen === 'onboarding' ? (
+        ) : screen === 'home' ? (
           <HomeScreen setScreen={(s) => {
             if (s === 'onboardingFlow') {
+              setScreen('onboarding');
               navigate('/onboarding');
             } else if (s === 'input') {
               navigate('/input');
@@ -225,7 +240,7 @@ export default function App() {
             navigate('/graph');
           }}
           onBack={() => {
-            setScreen('onboarding');
+            setScreen('home');
             navigate('/');
           }}
         />
